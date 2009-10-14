@@ -68,13 +68,38 @@ extends PHPUnit_Framework_TestCase
      * @param Object $fixture to test
      * @param string $method to check for on $fixture
      * @param string $message to report on failure (default if NULL)
+     * @return ethos_Test_TestCase for method chaining
      */
     public function assertMethodExists ( $fixture, $method, $message = null )
     {
         $this->assertTrue(method_exists($fixture, $method), ( is_null($message) ?
             sprintf('The $fixture should have a %s() method.', $method) : $message )
         ); // END assertTrue
+
+        return $this;
     } // END assertMethodExists
+
+
+    /**
+     * A common assertion when testing "setters" and other mostly internal methods
+     * is that the $method returns the $fixture for method chaining. This may
+     * require passing $arguments to the $method, using call_user_func_array and
+     * PHP's wacky callback syntax.
+     *
+     * @param mixed $fixture to test
+     * @param string $method to call on $fixture
+     * @param array $arguments to pass to $method
+     * @return ethos_Test_TestCase for method chaining
+     */
+    public function assertFluentInterface ( $fixture, $method, array $arguments = array() )
+    {
+        $this->assertSame(
+            $fixture, call_user_func_array(array($fixture, $method), $arguments),
+            sprintf('The %s() method should return the $fixture for method chaining.', $method)
+        ); // END assertSame
+
+        return $this;
+    } // END assertFluentInterface
 
 
     /**
