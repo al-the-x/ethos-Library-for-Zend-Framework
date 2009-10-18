@@ -62,4 +62,71 @@ abstract class ethos_Model_Abstract
         return $this;
     } // END _require
 
+
+    /**
+     * The get() method returns the value of the $field requested or throws an
+     * appropriate Exception if $field doesn't exist.
+     *
+     * @param string $field name to get()
+     * @return mixed value of $field
+     * @throws ethos_Model_Exception if $field doesn't exist
+     * @see _require()
+     */
+    public function get ( $field )
+    {
+        return $this->_require($field)->_fields[$field];
+    } // END get
+
+
+    /**
+     * The set() method sets $field to the specified $value and returns the Model
+     * object for method chaining or throws an appropriate Exception if $field
+     * doesn't exist.
+     *
+     * @param string $field name to set()
+     * @param mixed $value of $field
+     * @return ethos_Model_Abstract for method chaining
+     * @throws ethos_Model_Exception if $field doesn't exist
+     * @see _require()
+     */
+    public function set ( $field, $value )
+    {
+        $this->_require($field)->_fields[$field] = $value;
+
+        return $this;
+    } // END set
+
+
+    /**
+     * The _validate() method checks the $value passed against a set of validation
+     * rules specified for $field and returns an appropriate boolean to indicate
+     * pass or fail. If the $field doesn't exist, it throws an appropriate Exception.
+     *
+     * @param string $field to _validate()
+     * @param mixed $value to _validate()
+     * @return boolean if $value _validate()s for $field
+     * @throws ethos_Model_Exception if $field doesn't exist.
+     */
+    protected function _validate ( $field, $value )
+    {
+        return true;
+    } // END _validate
+
+
+    /**
+     * The _filter() method alters the $value passed based on the filtering rules
+     * setup in the Model for the $field specified. It returns the _filter()ed
+     * $value or throws an appropriate Exception if the $field requested doesn't
+     * exist.
+     *
+     * @param string $field name of the _filter()ing rules
+     * @param mixed $value to _filter()
+     * @return mixed _filter()ed $value
+     * @throws ethos_Model_Exception if $field doesn't exist
+     */
+    protected function _filter ( $field, $value )
+    {
+        return $value;
+    } // END _filter
+
 } // END ethos_Model_Abstract

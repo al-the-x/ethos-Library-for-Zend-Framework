@@ -17,9 +17,13 @@ extends ethos_Model_Abstract
 {
     public function __construct ( $options = array() )
     {
-        parent::__construct($options);
+        if ( isset($options['fields']) )
+        {
+            $this->_fields = $options['fields'];
+            unset($options['fields']);
+        }
 
-        $this->_fields = array( 'test' => null );
+        parent::__construct($options);
     } // END __construct
 
 
