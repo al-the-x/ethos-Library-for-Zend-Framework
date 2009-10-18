@@ -33,6 +33,12 @@ extends PHPUnit_Framework_TestCase
      */
     protected $_fixtureClass = null;
 
+    /**
+     * @var array of cached options passed to the $fixture constructor during setUp()
+     * @see setUp()
+     */
+    protected $_fixtureOptions = array();
+
 
     /**
      * Return a classname that can be instantiated as a Test Fixture by using a
@@ -54,7 +60,7 @@ extends PHPUnit_Framework_TestCase
 
             // @todo Trade this preg_replace for a Zend_Filter_Inflector instance.
             $this->_fixtureClass = preg_replace('/(?<=[a-z])Test$/', '', get_class($this));
-        } // END is_null
+        } // END if (is_null)
 
         return $this->_fixtureClass;
     } // END getFixtureClass
@@ -121,7 +127,7 @@ extends PHPUnit_Framework_TestCase
         if ( !method_exists($this, 'testConstructor') )
         {
             $fixtureClass = $this->getFixtureClass();
-            $this->fixture = new $fixtureClass;
+            $this->fixture = new $fixtureClass($this->_fixtureOptions);
         }
     } // END setUp
 
