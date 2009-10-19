@@ -43,12 +43,13 @@ abstract class ethos_Model_Abstract
 
 
     /**
-     * Stronger than has(), _require() enforces the existence of a $field by
-     * throwing an appropriate Exception if has() returns FALSE.
+     * The _require() method enforces the existence of a $field by throwing an
+     * appropriate Exception if it doesn't exist.
      *
      * @param string $field to test
      * @return ethos_Model_Abstract for method chaining
      * @throws ethos_Model_Exception if $field does not exist
+     * @see has()
      */
     public function _require ( $field )
     {
@@ -79,33 +80,14 @@ abstract class ethos_Model_Abstract
 
 
     /**
-     * The set() method sets $field to the specified $value and returns the Model
-     * object for method chaining or throws an appropriate Exception if $field
-     * doesn't exist.
-     *
-     * @param string $field name to set()
-     * @param mixed $value of $field
-     * @return ethos_Model_Abstract for method chaining
-     * @throws ethos_Model_Exception if $field doesn't exist
-     * @see _require()
-     */
-    public function set ( $field, $value )
-    {
-        $this->_require($field)->_fields[$field] = $value;
-
-        return $this;
-    } // END set
-
-
-    /**
      * The _validate() method checks the $value passed against a set of validation
      * rules specified for $field and returns an appropriate boolean to indicate
-     * pass or fail. If the $field doesn't exist, it throws an appropriate Exception.
+     * pass or fail. It generally doesn't care whether the $field exists, so this
+     * method can be used for any validity test the Model needs.
      *
      * @param string $field to _validate()
      * @param mixed $value to _validate()
      * @return boolean if $value _validate()s for $field
-     * @throws ethos_Model_Exception if $field doesn't exist.
      */
     protected function _validate ( $field, $value )
     {
@@ -115,18 +97,44 @@ abstract class ethos_Model_Abstract
 
     /**
      * The _filter() method alters the $value passed based on the filtering rules
-     * setup in the Model for the $field specified. It returns the _filter()ed
-     * $value or throws an appropriate Exception if the $field requested doesn't
-     * exist.
+     * setup in the Model for the $field specified. While _filter() is used by
+     * set(), by itself it generally doesn't care whether the $field exists,
+     * so this method can be used for any value sanitation that the Model might need.
      *
      * @param string $field name of the _filter()ing rules
      * @param mixed $value to _filter()
      * @return mixed _filter()ed $value
-     * @throws ethos_Model_Exception if $field doesn't exist
      */
     protected function _filter ( $field, $value )
     {
         return $value;
     } // END _filter
+
+
+    /**
+     * The set() method sets $field to the specified $value and returns the Model
+     * object for method chaining or throws an appropriate Exception if $field
+     * doesn't exist. It first attempts to _validate() the $value passed based
+     * on the rules for $field (by default, none) and _filter()s the $value
+     * appropriately.
+     *
+     * @param string $field name to set()
+     * @param mixed $value of $field
+     * @return ethos_Model_Abstract for method chaining
+     * @throws ethos_Model_Exception if $field doesn't exist
+     *
+     * @see _require()
+     * @see _validate()
+     * @see _filter()
+     */
+    public function set ( $field, $value )
+    {
+        if ( $this->_require($field)->_validate($field, $value) )
+        {
+            $this->_fields[$field] = $this->_filter($field, $value);
+        }
+
+        return $this;
+    } // END set
 
 } // END ethos_Model_Abstract
