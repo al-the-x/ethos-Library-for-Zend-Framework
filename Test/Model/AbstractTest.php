@@ -7,6 +7,11 @@
  */
 
 /**
+ * Require the parent class: ethos_Test_TestCase
+ */
+require_once 'ethos/Test/TestCase.php';
+
+/**
  * Exclude this file from the code coverage reports when running simple unit tests
  * on test fixtures.
  */
@@ -22,6 +27,36 @@ class Test_Model_AbstractTest
 extends ethos_Test_TestCase
 {
     /**
+     * A common assertion for the Model test cases is that an array $fixture (usually
+     * the $sharedFixture) has a particular $field and that the expected $value
+     * is set to that position.
+     *
+     * @param array $fixture to be tested
+     * @param string $field to be checked in $fixture
+     * @param mixed $value expected for $field
+     * @param string $message to return on failure (optional)
+     * @return Test_Model_AbstractTest for method chaining
+     */
+    public function assertFixtureHas ( array $fixture, $field, $value, $message = null )
+    {
+        $this->assertArrayHasKey($field, $fixture,
+            'The $fixture should have the $field specified: ' . print_r($field, true)
+        );
+
+        $this->assertEquals($value, $fixture[$field],
+            'The $fixture should have the expected $value in the $field specified.'
+        );
+
+        if ( $this->hasFailed() and !is_null($message) )
+        {
+            $this->fail($message);
+        }
+
+        return $this; // for method chaining
+    } // END assertSharedFixtureHas
+
+
+    /**
      * Overridden from parent to add setup logic for the $sharedFixture and
      * $_fixtureOptions.
      *
@@ -30,12 +65,14 @@ extends ethos_Test_TestCase
     public function setUp ( )
     {
         $this->setSharedFixture(new ArrayObject(array(
-            'test' => null,
+            'fields' => new ArrayObject(array(
+                'test' => null,
+            )), // END fields
+            'values' => new ArrayObject(array(
+            )), // END values
         )));
 
-        $this->_fixtureOptions = array(
-            'fields' => $this->sharedFixture,
-        );
+        $this->_fixtureOptions = $this->sharedFixture;
 
         parent::setUp();
     } // END setUp
@@ -140,7 +177,7 @@ extends ethos_Test_TestCase
             /**
              * The default test data is defined on each method signature.
              */
-            'default' => array( ),
+            'default' => array( null ),
             /**
              * The test fixture has a single $field named "test". Initially, we
              * test a NULL $value.
@@ -195,14 +232,8 @@ extends ethos_Test_TestCase
          */
         if ( $validField )
         {
-            $this->sharedFixture[$field] = $expected;
-
-            /**
-             * Just in case...
-             */
-            $this->assertEquals($expected, $this->sharedFixture[$field],
-                'The $sharedFixture should have the expected value in the specified $field.'
-            );
+            $this->sharedFixture['values'][$field] = $expected;
+            $this->assertFixtureHas((array) $this->sharedFixture['values'], $field, $expected);
         }
 
         /**
@@ -223,7 +254,7 @@ extends ethos_Test_TestCase
 
 
     /**
-     * @dataProvder provideFieldsAndValues
+     * @dataProvider provideFieldsAndValues
      * @param string $field name to test
      * @param boolean $validField if $field exists
      * @param mixed $value to _validate()
@@ -311,16 +342,85 @@ extends ethos_Test_TestCase
 
         $this->assertFluentInterface($this->fixture, 'set', array( $field, $value ));
 
-        /**
-         * Since the $sharedFixture was passed as the "fields" option to the
-         * $fixture constructor, whatever is successfully set() on the $fixture
-         * should appear in the $sharedFixture under the same $field name.
-         */
-        $this->assertEquals($expected, $this->sharedFixture[$field],
-            'After set() the $expected value should reside in the $sharedFixture.'
-        );
+        $this->assertFixtureHas((array) $this->sharedFixture['values'], $field, $expected,
+            'The $sharedFixture should the $expected value after set().'
+        ); // END assertFixtureHas
 
         return $this; // for method chaining
     } // END testSet
+
+
+    /**
+     * @dataProvider provideFieldsAndValues
+     * @param string $field to test
+     * @param boolean $validField if $field exists
+     * @param mixed $value to set into $field
+     * @return Test_Model_AbstractTest for method chaining
+     */
+    public function testIsset ( $field = null, $validField = false, $value = null )
+    {
+        $this->assertMethodExists($this->fixture, '__isset');
+
+        $this->assertType('boolean', $this->fixture->__isset($field),
+            'The return value() of __isset() should always be a boolean.'
+        );
+
+        $this->assertFalse($this->fixture->__isset($field),
+            'The $fixture should always have $field initially unset.'
+        );
+
+        if ( $validField )
+        {
+            $this->sharedFixture['values'][$field] = $value;
+            $this->assertFixtureHas((array) $this->sharedFixture['values'], $field, $value);
+        }
+
+        $this->assertEquals($validField, $this->fixture->__isset($field),
+            'The __isset() method should return TRUE after setting the $field.'
+        );
+
+        return $this; // for method chaining
+    } // END testIsset
+
+
+    /**
+     * @dataProvider provideFieldsAndValues
+     * @param string $field to test
+     * @param boolean $validField if $field exists
+     * @param mixed $value to be __unset()
+     * @param mixed $expected filtered $value
+     * @return Test_Model_AbstractTest for method chaining
+     */
+    public function testUnset ( $field = null, $validField = false, $value = null, $expected = null )
+    {
+        $this->assertMethodExists($this->fixture, '__unset');
+
+        $this->testSet($field, $validField, $value, $expected);
+
+        $this->assertFluentInterface($this->fixture, '__unset', array( $field ));
+
+        $this->assertFalse(isset($this->sharedFixture['values'][$field]),
+            'The $sharedFixture should NOT have a value for the specified $field after unset().'
+        );
+
+        return $this; // for method chaining
+    } // END testUnset
+
+
+    /**
+     * @dataProvider provideFieldsAndValues
+     * @param string $field to test
+     * @param boolean $validField if $field exists
+     * @param mixed $value to be __unset()
+     * @param mixed $expected filtered $value
+     * @return Test_Model_AbstractTest for method chaining
+     */
+    public function testUnsetTwice ( $field = null, $validField = false, $value = null, $expected = null )
+    {
+        return $this
+            ->testUnset($field, $validField, $value, $expected)
+            ->assertFluentInterface($this->fixture, '__unset', array( $field ))
+        ; // END $this
+    } // END testUnsetTwice
 
 } // END Test_Model_AbstractTest

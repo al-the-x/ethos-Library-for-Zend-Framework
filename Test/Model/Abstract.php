@@ -16,17 +16,17 @@ class Test_Model_Abstract
 extends ethos_Model_Abstract
 {
     /**
-     * Overridden from parent to process the "fields" option, which expects the
-     * value provided to be a replacement container for the fixture's $_fields
-     * property.
+     * Overridden from parent to process the "fields" and "values" options, which
+     * expects a replacement container for the fixture's $_fields and $_values
+     * properties, respectively.
      */
     public function __construct ( $options = array() )
     {
-        if ( isset($options['fields']) )
-        {
-            $this->_fields = $options['fields'];
-            unset($options['fields']);
-        }
+        $this->_fields = isset($options['fields']) ?
+            $options['fields'] : array();
+
+        $this->_values = isset($options['values']) ?
+            $options['values'] : array();
 
         parent::__construct($options);
     } // END __construct

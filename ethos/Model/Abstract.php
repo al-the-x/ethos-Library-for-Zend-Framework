@@ -24,6 +24,12 @@ abstract class ethos_Model_Abstract
      */
     protected $_fields = array();
 
+    /**
+     * @var array map of field names to current values
+     */
+    protected $_values = array();
+
+
     public function __construct ( $options = array() )
     {
     } // END __construct
@@ -60,7 +66,7 @@ abstract class ethos_Model_Abstract
             );
         }
 
-        return $this;
+        return $this; // for method chaining
     } // END _require
 
 
@@ -75,7 +81,19 @@ abstract class ethos_Model_Abstract
      */
     public function get ( $field )
     {
-        return $this->_require($field)->_fields[$field];
+        if ( $this->_require($field)->__isset($field) )
+        {
+            /**
+             * If the $field has been set(), then the interesting value will be
+             * in the $_values container.
+             */
+            return $this->_values[$field];
+        }
+
+        /**
+         * Otherwise, return the default value from the $_fields container.
+         */
+        return $this->_fields[$field];
     } // END get
 
 
@@ -131,10 +149,48 @@ abstract class ethos_Model_Abstract
     {
         if ( $this->_require($field)->_validate($field, $value) )
         {
-            $this->_fields[$field] = $this->_filter($field, $value);
+            $this->_values[$field] = $this->_filter($field, $value);
         }
 
-        return $this;
+        return $this; // for method chaining
     } // END set
+
+
+    /**
+     * The __isset() (magic) method returns a boolean TRUE / FALSE if the requested
+     * $field exists via has() AND has been set() by looking at the $_values
+     * property of the Model.
+     *
+     * @param string $field to test
+     * @return boolean if $field exists and has been previously set()
+     */
+    public function __isset ( $field )
+    {
+        return ( $this->has($field) and isset($this->_values[$field]) );
+    } // END __isset
+
+
+    /**
+     * The __unset() (magic) method will destroy a the value of the $field
+     * specified, removing it from the $_values container.
+     *
+     * @param string $field to __unset()
+     * @return ethos_Model_Abstract for method chaining
+     */
+    public function __unset ( $field )
+    {
+        /**
+         * If we attempt to unset() an array key that doesn't exist, then PHP
+         * will complain with a WARNING. Rather than suppressing errors with the
+         * shaddap (@), which is poor practice, we check that the $field __isset()
+         * first.
+         */
+        if ( $this->__isset($field) )
+        {
+            unset($this->_values[$field]);
+        }
+
+        return $this; // for method chaining
+    } // END __unset
 
 } // END ethos_Model_Abstract
