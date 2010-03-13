@@ -337,6 +337,10 @@ abstract class ethos_Model_Abstract
     } // END _getStorage
 
 
+    /**
+     * The save() method passes the changed $_values to the $_Storage adapter
+     * so that it can persist the data appropriately.
+     */
     public function save ( )
     {
         $this->_getStorage()->save((array) $this->_values);
