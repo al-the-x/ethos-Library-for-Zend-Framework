@@ -20,6 +20,10 @@ PHPUnit_Util_Filter::addFileToFilter(__FILE__, 'UNIT_TESTS');
  * @author David Rogers <david@ethos-development.com>
  * @package Test_Model
  * @category Test_Cases
+ *
+ * @todo Add test_get_default() to test getting a yet-unset field returns the default value
+ * @todo Add test_getStorage_bogus() to test getting a bogus Storage adapter
+ * @todo Add test_getStorage_new() to test instantiating a Storage adapter from the "storage" option
  */
 class Test_Model_AbstractTest
 extends ethos_Test_TestCase
@@ -93,8 +97,7 @@ extends ethos_Test_TestCase
     public function test_getOptions_bogus ( )
     {
         $this->setExpectedException(
-            'ethos_Model_Exception',
-            'The specified option is invalid: ' . 'totally.bogus.option'
+            'ethos_Pattern_Exception'
         );
 
         $this->fixture->getOption('totally.bogus.option');

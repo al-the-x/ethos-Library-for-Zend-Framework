@@ -21,33 +21,24 @@ abstract class ethos_Model_Abstract
     /**
      * @var array of options for this instance
      */
-    protected $_options = array(
-        /**
-         * Default classname for the $_Storage adapter
-         */
-        'storage' => null,
-    ); // END $_options
+    protected $_defaults = array(
+    ); // END $_defaults
 
     /**
-     * @var array map of field names to initial (default) values
+     * @var array map of field names to ethos_Model_Field instances
      */
-    protected $_fields = array();
+    protected $_fields = array(
+    ); // END $_fields
 
     /**
-     * @var array map of field names to current values
+     * @var array map of field names to (altered) values
      */
     protected $_values = array();
 
 
     public function __construct ( $options = array() )
     {
-        /**
-         * This is the only way I know how to perform an array union in PHP
-         */
-        $this->_setOptions(array_merge(
-            $this->_options, // default values
-            array_intersect_key( (array) $options, $this->_options )
-        ));
+        $this->_setOptions((array) $options);
     } // END __construct
 
 
@@ -63,7 +54,9 @@ abstract class ethos_Model_Abstract
             }
         } // END $options[storage]
 
-        $this->_options = $options;
+        $this->_Options = new ethos_Pattern_Options(
+            $options, $this->_defaults
+        );
 
         return $this; // for method chaining
     } // END _setOptions
@@ -71,76 +64,17 @@ abstract class ethos_Model_Abstract
 
     /**
      * The getOptions() method accepts an option $name in dotted syntax
-     * and returns the value for that key. Since $_options can be nested,
-     * the value returned might be an array.
+     * and returns the value for that key. It proxies to the $_Options
+     * object, which is an instance of ethos_Pattern_Options.
      *
      * @param string $name of the option to return
-     * @throws ethos_Model_Exception if $name is invalid
+     * @throws ethos_Pattern_Exception if $name is invalid
      * @return mixed value of the option
+     * @see ethos_Pattern_Options::get()
      */
     public function getOption ( $name )
     {
-        /**
-         * @var array of $indexes split from the $segments
-         */
-        $indexes = array();
-
-        /**
-         * @var string $name passed that can be modified
-         */
-        $segments = $name;
-
-        /**
-         * Splitting the $segments on the dot character yields a list
-         * of $indexes that can be used to burrow into the $_options
-         * array for the desired value. At each iteration, the $segments
-         * are trimmed away until only one remains.
-         */
-        while ( strstr($segments, '.') )
-        {
-            list($indexes[], $segments ) = explode('.', $segments, 2);
-        }
-
-        /**
-         * The final segment (or the only one, if no dotted $name was
-         * passed) is pushed into the $indexes for use as the final key.
-         */
-        array_push($indexes, $segments);
-
-        /**
-         * @var mixed value of the $option we're after
-         */
-        $option = $this->_options;
-
-        /**
-         * Iterating over the $indexes allows us to drill down into the
-         * $_options array recursively.
-         */
-        while ( !is_null(key($indexes)) )
-        {
-            /**
-             * If at any point in our drill-down, the current index is
-             * invalid, we throw an appropriate Exception.
-             */
-            if ( !isset($option[current($indexes)]) )
-            {
-                throw new ethos_Model_Exception(
-                    'The specified option is invalid: ' . $name
-                );
-            }
-
-            /**
-             * This is recursive logic: each value of $indexes is another
-             * layer we wish to inspect, so we keep around that layer and
-             * drill down by index each iteration.
-             */
-            $option = $option[current($indexes)];
-
-            next($indexes); // don't forget to advance your iterator
-        } // END while
-
-        return $option;
-
+        return $this->_Options->get($name);
     } // END getOption
 
 
