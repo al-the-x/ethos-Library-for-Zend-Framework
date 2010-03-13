@@ -1,6 +1,5 @@
 <?php
 /**
- * @license GPL3.0?
  * @author David Rogers <david@ethos-development.com>
  * @package Test_Model
  * @category Test_Cases
@@ -18,7 +17,6 @@ require_once 'ethos/Test/TestCase.php';
 PHPUnit_Util_Filter::addFileToFilter(__FILE__, 'UNIT_TESTS');
 
 /**
- * @license GPL3.0?
  * @author David Rogers <david@ethos-development.com>
  * @package Test_Model
  * @category Test_Cases
@@ -70,7 +68,10 @@ extends ethos_Test_TestCase
             )), // END fields
             'values' => new ArrayObject(array(
             )), // END values
-        )));
+            'storage' => $this->getMock('ethos_Model_Storage_Interface', array(
+                'save', 'load',
+            )), // END storage
+        ))); // END setSharedFixture(ArrayObject)
 
         $this->_fixtureOptions = $this->sharedFixture;
 
@@ -78,18 +79,40 @@ extends ethos_Test_TestCase
     } // END setUp
 
 
+    public function test_getOptions ( )
+    {
+        $this->assertEquals(
+            get_class($this->sharedFixture['storage']),
+            $this->fixture->getOption('storage'),
+            'The "storage" option of the $fixture should have the classname ' .
+            'of the Mock object stored in the $sharedFixture.'
+        );
+    } // END test_getOptions
+
+
+    public function test_getOptions_bogus ( )
+    {
+        $this->setExpectedException(
+            'ethos_Model_Exception',
+            'The specified option is invalid: ' . 'totally.bogus.option'
+        );
+
+        $this->fixture->getOption('totally.bogus.option');
+    } // END test_getOptions_bogus
+
+
     /**
-     * Provide values for testHas() and testRequire():
+     * Provide values for test_has() and test_require():
      *
      * - string $field to test
      * - boolean $validField if $field exists
      *
      * @return array of datasets for use in test cases
      *
-     * @see testHas()
-     * @see testRequire()
+     * @see test_has()
+     * @see test_require()
      */
-    public static function provideFields ( )
+    public static function provide_fields ( )
     {
         return array(
             /**
@@ -108,16 +131,16 @@ extends ethos_Test_TestCase
              */
             'non-existent field' => array( 'foobar', false ),
         ); // END datasets
-    } // END provideFields
+    } // END provide_fields
 
 
     /**
-     * @dataProvider provideFields
+     * @dataProvider provide_fields
      * @param string $field name to test
      * @param boolean $expected return value of has()
      * @return Test_Model_AbstractTest for method chaining
      */
-    public function testHas ( $field = null, $expected = false )
+    public function test_has ( $field = null, $expected = false )
     {
         $this->assertMethodExists($this->fixture, 'has');
 
@@ -130,16 +153,16 @@ extends ethos_Test_TestCase
         );
 
         return $this; // for method chaining
-    } // END testHas
+    } // END test_has
 
 
     /**
-     * @dataProvider provideFields
+     * @dataProvider provide_fields
      * @param string $field name to test
      * @param boolean $expected return value of has(), triggers Exception
      * @return Test_Model_AbstractTest for method chaining
      */
-    public function testRequire ( $field = null, $expected = false )
+    public function test_require ( $field = null, $expected = false )
     {
         /**
          * The _require() method should throw an appropriate Exception if the
@@ -158,11 +181,11 @@ extends ethos_Test_TestCase
         ; // END $this
 
         return $this; // for method chaining
-    } // END testRequire
+    } // END test_require
 
 
     /**
-     * Provide values for testGet(), testSet(), testValidate(), and testFilter():
+     * Provide values for test_get(), test_set(), test_validate(), and test_filter():
      *
      * - string $field to test
      * - boolean $validField if $field exists
@@ -171,7 +194,7 @@ extends ethos_Test_TestCase
      *
      * @return array of datasets for use in test cases
      */
-    public static function provideFieldsAndValues ( )
+    public static function provide_fields_and_values ( )
     {
         return array(
             /**
@@ -211,17 +234,17 @@ extends ethos_Test_TestCase
                 'filtered value' => 'value',
             ), // END dataset
         ); // END datasets
-    } // END provideFieldsAndValues
+    } // END provide_fields_and_values
 
 
     /**
-     * @dataProvider provideFieldsAndValues
+     * @dataProvider provide_fields_and_values
      * @param string $field name to test
      * @param boolean $validField if $field is a valid field name
      * @param mixed $expected return value of get()
      * @return Test_Model_AbstractTest for method chaining
      */
-    public function testGet ( $field = null, $validField = false, $expected = null )
+    public function test_get ( $field = null, $validField = false, $expected = null )
     {
         $this->assertMethodExists($this->fixture, 'get');
 
@@ -250,18 +273,18 @@ extends ethos_Test_TestCase
         );
 
         return $this; // for method chaining
-    } // END testGet
+    } // END test_get
 
 
     /**
-     * @dataProvider provideFieldsAndValues
+     * @dataProvider provide_fields_and_values
      * @param string $field name to test
      * @param boolean $validField if $field exists
      * @param mixed $value to _validate()
      * @param boolean $validValue boolean if $value is valid for $field
      * @return Test_Model_AbstractTest for method chaining
      */
-    public function testValidate ( $field = null, $validField = false, $value = null, $expected = true )
+    public function test_validate ( $field = null, $validField = false, $value = null, $expected = true )
     {
         $this->assertMethodExists($this->fixture, '_validate_');
 
@@ -283,18 +306,18 @@ extends ethos_Test_TestCase
         );
 
         return $this; // for method chaining
-    } // END testValidate
+    } // END test_validate
 
 
     /**
-     * @dataProvider provideFieldsAndValues
+     * @dataProvider provide_fields_and_values
      * @param string $field to test
      * @param boolean $validField if $field exists
      * @param mixed $value to _filter()
      * @param $expected return value of _filter()
      * @return Test_Model_Abstract for method chaining
      */
-    public function testFilter ( $field = null, $validField = false, $value = null, $expected = null )
+    public function test_filter ( $field = null, $validField = false, $value = null, $expected = null )
     {
         $this->assertMethodExists($this->fixture, '_filter_');
 
@@ -307,18 +330,18 @@ extends ethos_Test_TestCase
         );
 
         return $this; // for method chaining
-    } // END testFilter
+    } // END test_filter
 
 
     /**
-     * @dataProvider provideFieldsAndValues
+     * @dataProvider provide_fields_and_values
      * @param string $field to test
      * @param boolean $validField if $field exists
      * @param mixed $value to pass to set()
      * @param mixed $expected value returned from get()
      * @return Test_Model_AbstractTest for method chaining
      */
-    public function testSet ( $field = null, $validField = false, $value = null, $expected = null )
+    public function test_set ( $field = null, $validField = false, $value = null, $expected = null )
     {
         $this->assertMethodExists($this->fixture, 'set');
 
@@ -347,17 +370,17 @@ extends ethos_Test_TestCase
         ); // END assertFixtureHas
 
         return $this; // for method chaining
-    } // END testSet
+    } // END test_set
 
 
     /**
-     * @dataProvider provideFieldsAndValues
+     * @dataProvider provide_fields_and_values
      * @param string $field to test
      * @param boolean $validField if $field exists
      * @param mixed $value to set into $field
      * @return Test_Model_AbstractTest for method chaining
      */
-    public function testIsset ( $field = null, $validField = false, $value = null )
+    public function test_isset ( $field = null, $validField = false, $value = null )
     {
         $this->assertMethodExists($this->fixture, '__isset');
 
@@ -380,22 +403,22 @@ extends ethos_Test_TestCase
         );
 
         return $this; // for method chaining
-    } // END testIsset
+    } // END test_isset
 
 
     /**
-     * @dataProvider provideFieldsAndValues
+     * @dataProvider provide_fields_and_values
      * @param string $field to test
      * @param boolean $validField if $field exists
      * @param mixed $value to be __unset()
      * @param mixed $expected filtered $value
      * @return Test_Model_AbstractTest for method chaining
      */
-    public function testUnset ( $field = null, $validField = false, $value = null, $expected = null )
+    public function test_unset ( $field = null, $validField = false, $value = null, $expected = null )
     {
         $this->assertMethodExists($this->fixture, '__unset');
 
-        $this->testSet($field, $validField, $value, $expected);
+        $this->test_set($field, $validField, $value, $expected);
 
         $this->assertFluentInterface($this->fixture, '__unset', array( $field ));
 
@@ -404,23 +427,69 @@ extends ethos_Test_TestCase
         );
 
         return $this; // for method chaining
-    } // END testUnset
+    } // END test_unset
 
 
     /**
-     * @dataProvider provideFieldsAndValues
+     * @dataProvider provide_fields_and_values
      * @param string $field to test
      * @param boolean $validField if $field exists
      * @param mixed $value to be __unset()
      * @param mixed $expected filtered $value
      * @return Test_Model_AbstractTest for method chaining
      */
-    public function testUnsetTwice ( $field = null, $validField = false, $value = null, $expected = null )
+    public function test_unset_twice ( $field = null, $validField = false, $value = null, $expected = null )
     {
         return $this
-            ->testUnset($field, $validField, $value, $expected)
+            ->test_unset($field, $validField, $value, $expected)
             ->assertFluentInterface($this->fixture, '__unset', array( $field ))
         ; // END $this
-    } // END testUnsetTwice
+    } // END test_unset_twice
+
+
+    public static function provide_save ( )
+    {
+        return array(
+            'default' => array( ),
+            'after setting some values' => array(
+                array( 'test' => 'value' ),
+            ),
+        ); // END datasets
+    } // END provide_save
+
+
+    /**
+     * @dataProvider provide_save
+     * @param array $expected values passed to the Storage adapter's save() method
+     */
+    public function test_save ( $expected = array() )
+    {
+        foreach ( $expected as $field => $value )
+        {
+            $this->test_set($field, true, $value, true);
+        }
+
+        $this->sharedFixture['storage']
+            ->expects($this->once())
+            ->method('save')
+            ->with($expected)
+        ; // END Mock
+
+        $this->assertMethodExists($this->fixture, 'save');
+
+        $this->assertFluentInterface($this->fixture, 'save');
+
+        return $this; // for method chaining
+    } // END test_save
+
+
+    public function test_load ( )
+    {
+        $this->assertMethodExists($this->fixture, 'load');
+
+        $this->assertFluentInterface($this->fixture, 'load');
+
+        return $this; // for method chaining
+    } // END test_load
 
 } // END Test_Model_AbstractTest

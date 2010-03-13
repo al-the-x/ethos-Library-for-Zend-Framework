@@ -1,13 +1,11 @@
 <?php
 /**
- * @license GPL3.0??
  * @author David Rogers <david@ethos-development.com>
  * @package ethos_Model
  * @category Models
  */
 
 /**
- * @license GPL3.0??
  * @author David Rogers <david@ethos-development.com>
  * @package ethos_Model
  * @category Models
@@ -15,9 +13,20 @@
 abstract class ethos_Model_Abstract
 {
     /**
-     * @var ethos_Model_Storage_Interface
+     * @var ethos_Model_Storage_Interface to use as $_Storage adapter
      */
     protected $_Storage = null;
+
+
+    /**
+     * @var array of options for this instance
+     */
+    protected $_options = array(
+        /**
+         * Default classname for the $_Storage adapter
+         */
+        'storage' => null,
+    ); // END $_options
 
     /**
      * @var array map of field names to initial (default) values
@@ -32,7 +41,107 @@ abstract class ethos_Model_Abstract
 
     public function __construct ( $options = array() )
     {
+        /**
+         * This is the only way I know how to perform an array union in PHP
+         */
+        $this->_setOptions(array_merge(
+            $this->_options, // default values
+            array_intersect_key( (array) $options, $this->_options )
+        ));
     } // END __construct
+
+
+    protected function _setOptions ( array $options )
+    {
+        if ( isset($options['storage']) )
+        {
+            if ( $options['storage'] instanceof ethos_Model_Storage_Interface )
+            {
+                $this->_Storage = $options['storage'];
+
+                $options['storage'] = get_class($options['storage']);
+            }
+        } // END $options[storage]
+
+        $this->_options = $options;
+
+        return $this; // for method chaining
+    } // END _setOptions
+
+
+    /**
+     * The getOptions() method accepts an option $name in dotted syntax
+     * and returns the value for that key. Since $_options can be nested,
+     * the value returned might be an array.
+     *
+     * @param string $name of the option to return
+     * @throws ethos_Model_Exception if $name is invalid
+     * @return mixed value of the option
+     */
+    public function getOption ( $name )
+    {
+        /**
+         * @var array of $indexes split from the $segments
+         */
+        $indexes = array();
+
+        /**
+         * @var string $name passed that can be modified
+         */
+        $segments = $name;
+
+        /**
+         * Splitting the $segments on the dot character yields a list
+         * of $indexes that can be used to burrow into the $_options
+         * array for the desired value. At each iteration, the $segments
+         * are trimmed away until only one remains.
+         */
+        while ( strstr($segments, '.') )
+        {
+            list($indexes[], $segments ) = explode('.', $segments, 2);
+        }
+
+        /**
+         * The final segment (or the only one, if no dotted $name was
+         * passed) is pushed into the $indexes for use as the final key.
+         */
+        array_push($indexes, $segments);
+
+        /**
+         * @var mixed value of the $option we're after
+         */
+        $option = $this->_options;
+
+        /**
+         * Iterating over the $indexes allows us to drill down into the
+         * $_options array recursively.
+         */
+        while ( !is_null(key($indexes)) )
+        {
+            /**
+             * If at any point in our drill-down, the current index is
+             * invalid, we throw an appropriate Exception.
+             */
+            if ( !isset($option[current($indexes)]) )
+            {
+                throw new ethos_Model_Exception(
+                    'The specified option is invalid: ' . $name
+                );
+            }
+
+            /**
+             * This is recursive logic: each value of $indexes is another
+             * layer we wish to inspect, so we keep around that layer and
+             * drill down by index each iteration.
+             */
+            $option = $option[current($indexes)];
+
+            next($indexes); // don't forget to advance your iterator
+        } // END while
+
+        return $option;
+
+    } // END getOption
 
 
     /**
@@ -192,5 +301,53 @@ abstract class ethos_Model_Abstract
 
         return $this; // for method chaining
     } // END __unset
+
+
+    /**
+     * The _getStorage method returns the $_Storage adapter, after ensuring that
+     * it has been correctly instantiated. Please don't access the $_Storage
+     * property directly; use _getStorage() instead.
+     *
+     * @return ethos_Model_Storage_Interface
+     */
+    public function _getStorage ( )
+    {
+        /**
+         * @var string "storage" option, which contains the classname of the $_Storage adapter to use
+         */
+        $storageClass = $this->getOption('storage');
+
+        if ( !class_exists($storageClass) )
+        {
+            throw new ethos_Model_Storage_Interface(
+                'The storage class supplied does not exist: ' . $storageClass
+            );
+        }
+
+        /**
+         * Instantiate the $_Storage adapter if it doesn't already exist (or
+         * if it's an object that it shouldn't be.
+         */
+        if ( !($this->_Storage instanceof $storageClass) )
+        {
+            $this->Storage = new $storageClass;
+        }
+
+        return $this->_Storage;
+    } // END _getStorage
+
+
+    public function save ( )
+    {
+        $this->_getStorage()->save((array) $this->_values);
+
+        return $this;
+    } // END save
+
+
+    public function load ( )
+    {
+        return $this;
+    } // END load
 
 } // END ethos_Model_Abstract
