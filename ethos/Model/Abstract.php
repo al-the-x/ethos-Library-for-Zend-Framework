@@ -285,6 +285,8 @@ abstract class ethos_Model_Abstract
 
     public function load ( )
     {
+        $this->_getStorage()->load(array());
+
         return $this;
     } // END load
 

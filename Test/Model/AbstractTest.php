@@ -456,7 +456,7 @@ extends ethos_Test_TestCase
             'default' => array( ),
             'after setting some values' => array(
                 array( 'test' => 'value' ),
-            ),
+            ), // END dataset
         ); // END datasets
     } // END provide_save
 
@@ -486,8 +486,14 @@ extends ethos_Test_TestCase
     } // END test_save
 
 
-    public function test_load ( )
+    public function test_load ( $expected = array() )
     {
+        $this->sharedFixture['storage']
+            ->expects($this->once())
+            ->method('load')
+            ->with($expected)
+        ; // END Mock
+
         $this->assertMethodExists($this->fixture, 'load');
 
         $this->assertFluentInterface($this->fixture, 'load');
