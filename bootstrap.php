@@ -24,3 +24,7 @@ Zend_Loader_Autoloader::getInstance()
     ->registerNamespace('ethos')
 ; // END Zend_Loader_Autoloader
 
+require_once 'PHPUnit/Framework.php';
+
+PHPUnit_Util_Filter::addDirectoryToFilter('Zend', '.php');
+PHPUnit_Util_Filter::addDirectoryToFilter('Test', 'Test.php');
